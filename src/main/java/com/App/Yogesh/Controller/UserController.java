@@ -4,6 +4,8 @@ import com.App.Yogesh.Models.User;
 import com.App.Yogesh.Repository.UserRepository;
 import com.App.Yogesh.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,7 +46,19 @@ public class UserController {
      */
     @PutMapping("/api/users")
     public User updateUser(@RequestHeader("Authorization")String jwt) throws Exception {
-        User reqUser = userService.findUserByJwt(jwt);
+        if (jwt == null || !jwt.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid Authorization header");
+        }
+
+        // Extract the JWT token by removing the "Bearer " prefix
+        String token = jwt.substring(7);
+        User reqUser = userService.findUserByJwt(token);
+
+        // Ensure the user is found with the provided JWT
+        if (reqUser == null) {
+            throw new Exception("User not found for the provided JWT");
+        }
+
         User updateUser= userService.findUserByJwt(jwt);
         return updateUser;
     }
@@ -54,9 +68,23 @@ public class UserController {
      */
     @PutMapping("/api/users/follow/{userId2}")
     public User followUserHandler(@RequestHeader ("Authorization") String jwt,  @PathVariable Integer userId2) throws Exception {
-        User reqUser= userService.findUserByJwt(jwt);
-        User user = userService.followUser(reqUser.getId(),userId2);
-        return user;
+
+        if (jwt == null || !jwt.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid Authorization header");
+        }
+
+        // Extract the JWT token by removing the "Bearer " prefix
+        String token = jwt.substring(7);
+        User reqUser = userService.findUserByJwt(token);
+
+        // Ensure the user is found with the provided JWT
+        if (reqUser == null) {
+            throw new Exception("User not found for the provided JWT");
+        }
+
+        // Execute the follow user logic
+        User updatedUser = userService.followUser(reqUser.getId(), userId2);
+        return updatedUser;
     }
 
     /**
@@ -69,9 +97,18 @@ public class UserController {
     }
 
     @GetMapping("/api/users/profile")
-    public User getUserFromToken(@RequestHeader("Authorization")String jwt){
-        System.out.println("jwt----------"+jwt);
-        User user = userService.findUserByJwt(jwt);
+    public User getUserFromToken(@RequestHeader("Authorization")String jwt) throws Exception {
+        if (jwt == null || !jwt.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid JWT format");
+        }
+
+        String token = jwt.trim().substring(7); // Remove "Bearer " prefix
+        User user = userService.findUserByJwt(token);
+        if (user == null) {
+            throw new Exception("User not found for the provided JWT");
+        }
+
+
         user.setPassword(null);
         return user;
     }

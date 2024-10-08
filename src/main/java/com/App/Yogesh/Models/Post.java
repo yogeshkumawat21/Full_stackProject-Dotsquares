@@ -50,7 +50,7 @@ public class Post {
         this.comments = comments;
         this.id = id;
         this.image = image;
-        Caption = caption;
+        this.Caption = caption;
         this.video = video;
         this.user = user;
         this.createdAt = createdAt;
