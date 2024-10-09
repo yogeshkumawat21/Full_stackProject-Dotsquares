@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RestController
 public class ReelsController {
     @Autowired
     private ReelsService reelsService;
@@ -26,6 +27,7 @@ public class ReelsController {
 
         // Extract the JWT token by removing the "Bearer " prefix
         String token = jwt.substring(7).trim();
+        System.out.println(jwt);
         User reqUser = userService.findUserByJwt(token);
 
         // Ensure the user is found with the provided JWT
