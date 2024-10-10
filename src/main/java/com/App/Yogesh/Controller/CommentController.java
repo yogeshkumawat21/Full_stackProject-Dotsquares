@@ -35,7 +35,9 @@ public class CommentController {
         if (reqUser == null) {
             throw new Exception("User not found for the provided JWT");
         }
-
+        if (comment.getContent()== null ) {
+            throw new IllegalArgumentException("Enter Content To Proceed");
+        }
         // Create the comment with the found user ID
         Comment createdComment = commentService.createComment(comment, postId, reqUser.getId());
 

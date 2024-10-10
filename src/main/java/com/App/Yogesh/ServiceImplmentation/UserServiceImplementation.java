@@ -33,6 +33,7 @@ public class UserServiceImplementation implements UserService {
         Optional<User> user = userRepository.findById(id);
         if(user.isPresent())
         {
+
             return user.get();
         }
         throw new Exception("user not exist with userId"+id);

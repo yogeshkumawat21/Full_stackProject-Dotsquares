@@ -42,6 +42,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+
 		<!-- MySQL Database Connector -->
 		<dependency>
 			<groupId>com.mysql</groupId>

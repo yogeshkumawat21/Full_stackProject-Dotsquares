@@ -49,7 +49,7 @@ public class PostServiceImplementation implements PostService {
         User user = userService.findUserById(userId);
 
         // Check if the user owns the post
-        if (!post.getUser().getId().equals(user.getId())) {
+        if (post.getUser().getId() != user.getId()) { // Use == instead of equals()
             throw new Exception("You can't delete another user's post.");
         }
 
@@ -57,6 +57,7 @@ public class PostServiceImplementation implements PostService {
         postRepository.delete(post);
         return "Post deleted successfully";
     }
+
 
     @Override
     public List<Post> findPostByUserId(Integer userId) {

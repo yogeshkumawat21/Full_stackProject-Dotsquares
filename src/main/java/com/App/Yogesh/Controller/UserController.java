@@ -4,8 +4,6 @@ import com.App.Yogesh.Models.User;
 import com.App.Yogesh.Repository.UserRepository;
 import com.App.Yogesh.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +35,7 @@ public class UserController {
         if (user.isEmpty()) {
             throw new Exception("User not found with ID " + id);
         }
+
         return user;
     }
 

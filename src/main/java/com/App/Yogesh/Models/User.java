@@ -5,10 +5,7 @@
 
 
 package com.App.Yogesh.Models;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,63 +15,43 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
+
     private String firstName;
 
-    public String getGender() {
-        return gender;
-    }
+    private String middleName;
 
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
+    private String lastName;
 
     private String gender;
-    private String lastName;
+
     private String email;
-    private List<Integer> followings=new ArrayList<>();
 
-    @JsonIgnore
+    private String password;
+
+    private List<Integer> followers = new ArrayList<>();
+    private List<Integer> followings = new ArrayList<>();
     @ManyToMany
-    private List<Post> savedPost= new ArrayList<>();
+    private List<Post> savedPost = new ArrayList<>();
 
-
-    public User(){};
-    private String password ;
-    private List<Integer> followers=new ArrayList<>();
-
-    public List<Post> getSavedPost() {
-        return savedPost;
+    public User() {
     }
 
-    public void setSavedPost(List<Post> savedPost) {
-        this.savedPost = savedPost;
-    }
-
-
-
-    public User(String firstName, int id, String lastName, String email, String password,String gender, List<Integer> followers, List<Integer> followings, List<Post> savedPost) {
-        super();
+    public User(String firstName, String middleName, int id, String lastName, String email, String password,
+                String gender, List<Integer> followers, List<Integer> followings, List<Post> savedPost) {
         this.firstName = firstName;
-        this.gender=gender;
+        this.middleName = middleName;
         this.id = id;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
+        this.gender = gender;
         this.followers = followers;
         this.followings = followings;
         this.savedPost = savedPost;
     }
 
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Integer getId() {
+    // Getters and setters for all fields
+    public int getId() {
         return id;
     }
 
@@ -90,12 +67,36 @@ public class User {
         this.firstName = firstName;
     }
 
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
     public String getLastName() {
         return lastName;
     }
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -122,17 +123,25 @@ public class User {
         this.followings = followings;
     }
 
+    public List<Post> getSavedPost() {
+        return savedPost;
+    }
+
+    public void setSavedPost(List<Post> savedPost) {
+        this.savedPost = savedPost;
+    }
+
     @Override
     public String toString() {
         return "User{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
-                ", gender='" + gender + '\'' +
+                ", middleName='" + middleName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", gender='" + gender + '\'' +
                 ", email='" + email + '\'' +
                 ", followings=" + followings +
                 ", savedPost=" + savedPost +
-                ", password='" + password + '\'' +
                 ", followers=" + followers +
                 '}';
     }

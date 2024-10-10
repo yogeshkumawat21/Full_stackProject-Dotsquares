@@ -34,6 +34,9 @@ public class ReelsController {
         if (reqUser == null) {
             throw new Exception("User not found for the provided JWT");
         }
+        if (reel.getTitle()==null ||reel.getVideo()==null ) {
+            throw new IllegalArgumentException("Enter the Mandatory  inputs");
+        }
         Reels createdReels = reelsService.createReels(reel, reqUser);
         return createdReels;
     }

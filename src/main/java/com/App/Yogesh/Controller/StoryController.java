@@ -34,6 +34,10 @@ public class StoryController {
         if (reqUser == null) {
             throw new Exception("User not found for the provided JWT");
         }
+        if (story.getCaptions()==null ||story.getImage()==null ) {
+            throw new IllegalArgumentException("Enter the Mandatory  inputs");
+        }
+
         Story createdStory = storyService.createStory(story,reqUser);
         return createdStory;
 

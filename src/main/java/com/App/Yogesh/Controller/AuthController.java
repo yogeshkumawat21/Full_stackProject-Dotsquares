@@ -7,6 +7,7 @@ import com.App.Yogesh.ServiceImplmentation.CustomUserDetailService;
 import com.App.Yogesh.Services.UserService;
 import com.App.Yogesh.config.JwtProvider;
 import com.App.Yogesh.request.LoginRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,7 +28,7 @@ import java.util.List;
 public class AuthController {
 
     @Autowired
-  private   UserService userService;
+    private UserService userService;
 
     @Autowired
     private CustomUserDetailService customUserDetailService;
@@ -38,62 +39,47 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-
     /**
      * Creates a new user or updates an existing user.
      */
     @PostMapping("/signup")
-    public AuthResponse createUser(@RequestBody User user) throws Exception {
-
-       User isExist = userRepository.findByEmail(user.getEmail());
-       if(isExist!=null)
-        {
-            throw new Exception("this email is used with another account");
+    public AuthResponse createUser(@Valid @RequestBody User user) throws Exception {
+        User existingUser = userRepository.findByEmail(user.getEmail());
+        if (existingUser != null) {
+            throw new Exception("This email is already associated with another account.");
+        }
+        if (user.getPassword() == null ||user.getGender()==null||user.getFirstName()==null) {
+            throw new IllegalArgumentException("Fill the Mandatory user inputs");
         }
 
-        User newUser = new User();
-        newUser.setEmail(user.getEmail());
-        newUser.setFirstName(user.getFirstName());
-        newUser.setLastName(user.getLastName());
-        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(newUser);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User savedUser = userRepository.save(user);
 
-        AuthResponse res = new AuthResponse("Register Success");
-        return res;
+        return new AuthResponse("Registration Successful", null);
     }
 
+    /**
+     * Authenticates a user and returns a JWT token if successful.
+     */
     @PostMapping("/signin")
     public AuthResponse signin(@RequestBody LoginRequest loginRequest) {
-        // Authenticate the user and get the Authentication object
         Authentication authentication = authenticate(loginRequest.getEmail(), loginRequest.getPassword());
 
-        // Extract email and authorities from the Authentication object
-        String email = authentication.getName(); // Get the email
-        List<GrantedAuthority> authorities = new ArrayList<>(authentication.getAuthorities()); // Get the authorities
+        String email = authentication.getName();
+        List<GrantedAuthority> authorities = new ArrayList<>(authentication.getAuthorities());
 
-        // Generate the JWT token
-        String token = JwtProvider.generateToken(email,authorities);
+        String token = JwtProvider.generateToken(email, authorities);
 
-        // Return the response with the token
-        return new AuthResponse("Login Success", token);
+        return new AuthResponse("Login Successful", token);
     }
-
 
     private Authentication authenticate(String email, String password) {
-
         UserDetails userDetails = customUserDetailService.loadUserByUsername(email);
 
-        if(userDetails==null)
-        {
-            throw new BadCredentialsException("Invalid User");
-
-        }
-        if(!passwordEncoder.matches(password,userDetails.getPassword()))
-        {
-            throw new BadCredentialsException("Password not matched");
+        if (userDetails == null || !passwordEncoder.matches(password, userDetails.getPassword())) {
+            throw new BadCredentialsException("Invalid email or password.");
         }
 
-        return  new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
-
 }

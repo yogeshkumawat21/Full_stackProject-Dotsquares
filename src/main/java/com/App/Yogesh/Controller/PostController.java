@@ -37,6 +37,9 @@ public class PostController {
         }
 
         User reqUser = userService.findUserByJwt(jwt);
+        if (post.getCaption() == null ) {
+            throw new IllegalArgumentException("Enter something to Create Post");
+        }
         Post createdPost = postService.createNewPost(post, reqUser.getId());
         return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
 
