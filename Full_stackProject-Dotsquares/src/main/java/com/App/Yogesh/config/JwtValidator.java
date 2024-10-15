@@ -20,7 +20,6 @@ public class JwtValidator extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String jwt = request.getHeader(jwtConstant.JWT_HEADER);
-        System.out.println(jwt);
         if (jwt != null && JwtProvider.validateJwtToken(jwt.substring(7))) {
             jwt=jwt.substring(7);
             String email = JwtProvider.getEmailFromJwtToken(jwt);

@@ -1,5 +1,6 @@
 package com.App.Yogesh.Controller;
 
+import com.App.Yogesh.Dto.PostDto;
 import com.App.Yogesh.Models.Post;
 import com.App.Yogesh.Models.User;
 import com.App.Yogesh.Response.ApiResponse;
@@ -8,10 +9,9 @@ import com.App.Yogesh.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -26,7 +26,7 @@ public class PostController {
      * Creates a new post for a specific user.
      */
     @PostMapping("/api/post")
-    public ResponseEntity<Post> createPost(
+    public ResponseEntity<?> createPost(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody Post post) throws Exception {
         String jwt;
@@ -35,14 +35,26 @@ public class PostController {
         } else {
             throw new IllegalArgumentException("Invalid Authorization header");
         }
-
         User reqUser = userService.findUserByJwt(jwt);
-        if (post.getCaption() == null ) {
-            throw new IllegalArgumentException("Enter something to Create Post");
+        if (post.getCaption().isEmpty())
+        {
+
+            ApiResponse<PostDto> response = new ApiResponse<>(
+                    "Post Not Created",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
         Post createdPost = postService.createNewPost(post, reqUser.getId());
-        return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
-
+        PostDto postDto = new PostDto(createdPost);
+        // Create the response object
+        ApiResponse<PostDto> response = new ApiResponse<>(
+                "Post Created Successfully",
+                HttpStatus.CREATED.value(),
+                postDto
+        );
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -64,46 +76,124 @@ public class PostController {
         if (reqUser == null) {
             throw new Exception("User not found for the provided JWT");
         }
+        Post post = postService.findPostById(postId);
+        if (post == null) {
+            ApiResponse<String> response = new ApiResponse<>(
+                    "Post not found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
 
-        String message = postService.deletePost(postId, reqUser.getId());
-        ApiResponse response = new ApiResponse(message, true);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+        // Attempt to delete the post
+       else
+        {
+            String message = postService.deletePost(postId, reqUser.getId());
+
+            // Create the response object
+            ApiResponse<String> response = new ApiResponse<>(message, HttpStatus.OK.value(), null);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);}
+        }
 
     /**
      * Retrieves a post by its ID.
      */
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<Post> findPostByIdHandler(@PathVariable Integer postId) throws Exception {
+    public ResponseEntity<ApiResponse<?>> findPostByIdHandler(@PathVariable Integer postId) throws Exception {
         Post post = postService.findPostById(postId);
-        return new ResponseEntity<>(post, HttpStatus.ACCEPTED);
+        if (post == null) {
+            ApiResponse<String> response = new ApiResponse<>(
+                    "Post not found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+
+        //Found post
+        else
+        {
+            PostDto postDto =new PostDto(post);
+
+            // Create the response object
+            ApiResponse<PostDto> response = new ApiResponse<>("Post Found Successfully", HttpStatus.OK.value(), postDto);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);}
     }
+
+
 
     /**
      * Retrieves all posts made by a specific user.
      */
     @GetMapping("/posts/user/{userId}")
-    public ResponseEntity<List<Post>> findUsersPost(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse<List<PostDto>>> findUsersPost(@PathVariable Integer userId) {
         List<Post> posts = postService.findPostByUserId(userId);
-        return new ResponseEntity<>(posts, HttpStatus.OK);
+        List<PostDto> postDtos = new ArrayList<>();
 
+        // Check if the list is empty, not null
+        if (posts == null || posts.isEmpty()) {
+            ApiResponse<List<PostDto>> response = new ApiResponse<>(
+                    "No Posts Found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+
+        // Convert each Post to PostDto
+        for (Post post : posts) {
+            postDtos.add(new PostDto(post)); // Add the converted PostDto to the list
+        }
+
+        // Create the response object
+        ApiResponse<List<PostDto>> response = new ApiResponse<>(
+                "Posts Found Successfully",
+                HttpStatus.OK.value(),
+                postDtos
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
     /**
      * Retrieves all posts.
      */
     @GetMapping("/posts")
-    public ResponseEntity<List<Post>> findAllPost() {
+    public ResponseEntity<ApiResponse<List<PostDto>>> findAllPost() {
         List<Post> posts = postService.findAllPost();
-        return new ResponseEntity<>(posts, HttpStatus.OK);
+        List<PostDto> postDtos = new ArrayList<>();
+        // Check if the list is empty, not null
+        if (posts == null || posts.isEmpty()) {
+            ApiResponse<List<PostDto>> response = new ApiResponse<>(
+                    "No Posts Found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+        for (Post post : posts) {
+            postDtos.add(new PostDto(post)); // Convert each Post to PostDto
+        }
+
+        // Create the response object
+        ApiResponse<List<PostDto>> response = new ApiResponse<>(
+                "Posts retrieved successfully",
+                HttpStatus.OK.value(),
+                postDtos
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
 
     /**
      * Saves a post for a specific user (e.g., bookmark or favorite).
      */
     @PutMapping("/posts/save/{postId}")
-    public ResponseEntity<Post> savePostHandler(@PathVariable Integer postId
-            , @RequestHeader ("Authorization") String jwt) throws Exception {
+    public ResponseEntity<ApiResponse<PostDto>> savePostHandler(@PathVariable Integer postId,
+                                                                @RequestHeader("Authorization") String jwt) throws Exception {
         if (jwt == null || !jwt.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Invalid Authorization header");
         }
@@ -116,16 +206,39 @@ public class PostController {
         if (reqUser == null) {
             throw new Exception("User not found for the provided JWT");
         }
-        Post post = postService.savedPost(postId,reqUser.getId());
-        return new ResponseEntity<>(post, HttpStatus.ACCEPTED);
+
+        // Save the post for the user
+        Post post = postService.savedPost(postId, reqUser.getId());
+
+        // Check if the post was successfully saved
+        if (post == null) {
+            ApiResponse<PostDto> response = new ApiResponse<>(
+                    "Post not found or could not be saved",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+
+        // Convert the saved post to PostDto
+        PostDto postDto = new PostDto(post);
+
+        // Create the response object
+        ApiResponse<PostDto> response = new ApiResponse<>(
+                "Post saved successfully",
+                HttpStatus.ACCEPTED.value(),
+                postDto
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
     }
 
     /**
      * Likes or unlikes a post for a specific user.
      */
     @PutMapping("/posts/like/{postId}")
-    public ResponseEntity<Post> likePostHandler(@PathVariable Integer postId,
-                                                @RequestHeader ("Authorization") String jwt) throws Exception {
+    public ResponseEntity<ApiResponse<PostDto>> likePostHandler(@PathVariable Integer postId,
+                                                                @RequestHeader("Authorization") String jwt) throws Exception {
         if (jwt == null || !jwt.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Invalid Authorization header");
         }
@@ -139,7 +252,30 @@ public class PostController {
             throw new Exception("User not found for the provided JWT");
         }
 
+        // Attempt to like the post
         Post post = postService.likePost(postId, reqUser.getId());
-        return new ResponseEntity<>(post, HttpStatus.ACCEPTED);
+
+        // Check if the post was found and liked successfully
+        if (post == null) {
+            ApiResponse<PostDto> response = new ApiResponse<>(
+                    "Post not found or could not be liked",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+
+        // Convert the liked post to PostDto
+        PostDto postDto = new PostDto(post);
+
+        // Create the response object
+        ApiResponse<PostDto> response = new ApiResponse<>(
+                "Post liked successfully",
+                HttpStatus.OK.value(),
+                postDto
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
 }

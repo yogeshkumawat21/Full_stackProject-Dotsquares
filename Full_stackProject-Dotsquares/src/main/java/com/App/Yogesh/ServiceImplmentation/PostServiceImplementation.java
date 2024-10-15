@@ -65,13 +65,11 @@ public class PostServiceImplementation implements PostService {
     }
 
     @Override
-    public Post findPostById(Integer postId) throws Exception {
+    public Post findPostById(Integer postId) {
         Optional<Post> opt = postRepository.findById(postId);
-        if (opt.isEmpty()) {
-            throw new Exception("Post not found with ID " + postId);
-        }
-        return opt.get();
+        return opt.orElse(null); // Return the post if found, otherwise return null
     }
+
 
     @Override
     public List<Post> findAllPost() {

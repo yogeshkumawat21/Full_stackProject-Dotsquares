@@ -68,11 +68,11 @@ public class JwtProvider {
     public static boolean validateJwtToken(String token) {
         try {
             Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
-            System.out.println(token);
+//            System.out.println(token);
             return true; // Token is valid
 
         } catch (JwtException | IllegalArgumentException e) {
-            System.out.println(token);
+//            System.out.println(token);
             return false; // Token is invalid
         }
     }
