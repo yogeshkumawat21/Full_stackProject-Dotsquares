@@ -1,14 +1,22 @@
 package com.App.Yogesh.Controller;
 
 
+import com.App.Yogesh.Dto.ReelDto;
+import com.App.Yogesh.Dto.UserDetailsDto;
+import com.App.Yogesh.Dto.UserDto;
 import com.App.Yogesh.Models.Reels;
 import com.App.Yogesh.Models.User;
+import com.App.Yogesh.Response.ApiResponse;
 import com.App.Yogesh.Services.ReelsService;
 import com.App.Yogesh.Services.UserService;
+import com.App.Yogesh.config.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class ReelsController {
@@ -18,41 +26,86 @@ public class ReelsController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    UserContext userContext;
 
+
+    //Api for Creating Reels
     @PostMapping("/api/reels")
-    public Reels createReels(@RequestBody Reels reel , @RequestHeader("Authorization")String jwt) throws Exception {
-        if (jwt == null || !jwt.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid Authorization header");
-        }
-
-        // Extract the JWT token by removing the "Bearer " prefix
-        String token = jwt.substring(7).trim();
-        System.out.println(jwt);
-        User reqUser = userService.findUserByJwt(token);
-
+    public ResponseEntity<ApiResponse<?>> createReels(@RequestBody Reels reel ) throws Exception {
+        UserDetailsDto currentUser = userContext.getCurrentUser();
+        User reqUser = userService.findUserByEmail(currentUser.getEmail());
         // Ensure the user is found with the provided JWT
-        if (reqUser == null) {
-            throw new Exception("User not found for the provided JWT");
+        if (reel.getVideo() == null) {
+            ApiResponse<UserDto> response = new ApiResponse<>(
+                    "Select Video to Upload",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-        if (reel.getTitle()==null ||reel.getVideo()==null ) {
-            throw new IllegalArgumentException("Enter the Mandatory  inputs");
-        }
+
         Reels createdReels = reelsService.createReels(reel, reqUser);
-        return createdReels;
+        ReelDto reelDto = new ReelDto(createdReels);
+        ApiResponse<ReelDto> response = new ApiResponse<>(
+                "Reels Created Successfully",
+                HttpStatus.CREATED.value(),
+                reelDto
+        );
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    //Find all reels
     @GetMapping("/api/reels")
-    public List<Reels> findAllReels( ) throws Exception {
+    public ResponseEntity<ApiResponse<?>> findAllReels( ) throws Exception {
 
         List<Reels> reels = reelsService.findAllReels();
-        return  reels;
+
+        if (reels.isEmpty()) {
+            ApiResponse<UserDto> response = new ApiResponse<>(
+                    "No Reel Found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        // Map User entities to UserDto
+        List<ReelDto> reelDtos = reels.stream()
+                .map(ReelDto::new) // Using the constructor that takes a User object
+                .collect(Collectors.toList());
+        ApiResponse<List<ReelDto>> response = new ApiResponse<>(
+                "Reel Fetched Successfully",
+                HttpStatus.FOUND.value(),
+                reelDtos
+        );
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+
+//find all reels for specific user id
     @GetMapping("/api/reels/{userId}")
-    public List<Reels> findAllReels(@PathVariable Integer userId) throws Exception {
+    public ResponseEntity<ApiResponse<?>> findAllReels(@PathVariable Integer userId) throws Exception {
 
         List<Reels> reels = reelsService.findUsersReel(userId);
-        return  reels;
+        if (reels.isEmpty()) {
+            ApiResponse<UserDto> response = new ApiResponse<>(
+                    "No Reel Found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        // Map User entities to UserDto
+        List<ReelDto> reelDtos = reels.stream()
+                .map(ReelDto::new) // Using the constructor that takes a User object
+                .collect(Collectors.toList());
+        ApiResponse<List<ReelDto>> response = new ApiResponse<>(
+                "Reel Fetched Successfully",
+                HttpStatus.FOUND.value(),
+                reelDtos
+        );
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+
     }
 
 }

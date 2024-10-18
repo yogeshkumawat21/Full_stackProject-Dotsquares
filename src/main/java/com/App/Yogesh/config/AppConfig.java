@@ -1,5 +1,6 @@
 package com.App.Yogesh.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -32,9 +38,27 @@ public class AppConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class) // Ensure your filter is correctly registered
-                .csrf(AbstractHttpConfigurer::disable); // Disable CSRF for API
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors->cors.configurationSource(corsConfigurationSource()));
 
         return http.build();
+    }
+
+    private CorsConfigurationSource corsConfigurationSource() {
+        return  new CorsConfigurationSource() {
+            @Override
+            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                CorsConfiguration cfg = new CorsConfiguration();
+                cfg.setAllowedOrigins(Arrays.asList(
+                            "localhost:8081/auth/signup","localhost:8081/auth/signin"
+                ));
+                cfg.setAllowedMethods(Collections.singletonList("*"));
+                cfg.setAllowedHeaders(Collections.singletonList("*"));
+                cfg.addExposedHeader(Arrays.asList("Authorization").toString());
+                cfg.setMaxAge(3600L);
+                return cfg;
+            }
+        };
     }
 
     @Bean

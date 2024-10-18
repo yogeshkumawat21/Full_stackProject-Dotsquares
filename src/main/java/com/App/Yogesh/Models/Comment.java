@@ -9,18 +9,38 @@ import java.util.List;
 @Entity
 public class Comment {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Change to IDENTITY for auto-increment
     private Integer id;
 
     private String content;
 
     @ManyToOne
+    @JoinColumn(name = "user_id") // Foreign key column for user
     private User user;
 
     @ManyToMany
     private List<User> liked = new ArrayList<>();
 
-     private LocalDateTime createdAt;
+    private LocalDateTime createdAt;
+
+    @ManyToOne // Each comment should belong to one post
+    @JoinColumn(name = "post_id") // Foreign key column for post
+    private Post post;
+
+    public Comment() {
+        this.createdAt = LocalDateTime.now(); // Initialize createdAt with the current time
+    }
+
+    public Comment(Integer id, String content, List<User> liked, LocalDateTime createdAt, User user, Post post) {
+        this.id = id;
+        this.content = content;
+        this.liked = liked;
+        this.createdAt = createdAt;
+        this.user = user;
+        this.post = post;
+    }
+
+    // Getters and setters...
 
     public Integer getId() {
         return id;
@@ -62,12 +82,11 @@ public class Comment {
         this.createdAt = createdAt;
     }
 
-    public Comment(Integer id, String content, List<User> liked, LocalDateTime createdAt, User user) {
-        this.id = id;
-        this.content = content;
-        this.liked = liked;
-        this.createdAt = createdAt;
-        this.user = user;
+    public Post getPost() {
+        return post;
     }
-    public Comment(){};
+
+    public void setPost(Post post) {
+        this.post = post;
+    }
 }

@@ -30,12 +30,12 @@ public class CommentServiceImplementation implements CommentService {
 
     @Override
     public Comment createComment(Comment comment, Integer postId, Integer userId) throws Exception{
-         User user =userService.findUserById(userId);
+        User user =userService.findUserById(userId);
         Post  post = postService.findPostById(postId);
         comment.setUser(user);
         comment.setContent(comment.getContent());
         comment.setCreatedAt(LocalDateTime.now());
-
+        comment.setPost(post);
         Comment savedComment = commentRepository.save(comment);
         post.getComments().add(savedComment);
         postRepository.save(post);
@@ -43,16 +43,29 @@ public class CommentServiceImplementation implements CommentService {
     }
 
     @Override
-    public Comment likeComment(Integer CommentId, Integer userId) throws Exception {
-      Comment comment=  findCommentById(userId);
-        User user = userService.findUserById(userId);
-        if(!comment.getLiked().contains(user))
-        {
-            comment.getLiked().add(user);
+    public Comment likeComment(Integer commentId, Integer userId) throws Exception {
+        // Fetch the comment with the associated post
+        Comment comment = findCommentById(commentId);
+        if (comment == null) {
+            throw new Exception("Comment not found");
         }
-        else comment.getLiked().remove(user);
+
+        User user = userService.findUserById(userId);
+        if (user == null) {
+            throw new Exception("User not found");
+        }
+
+        // Toggle like/unlike
+        if (!comment.getLiked().contains(user)) {
+            comment.getLiked().add(user);
+        } else {
+            comment.getLiked().remove(user);
+        }
+
+        // Save the updated comment
         return commentRepository.save(comment);
     }
+
 
     @Override
     public Comment findCommentById(Integer commentId) throws Exception {

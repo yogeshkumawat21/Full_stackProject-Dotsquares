@@ -1,14 +1,18 @@
 package com.App.Yogesh.Controller;
 
+import com.App.Yogesh.Dto.UserDetailsDto;
+import com.App.Yogesh.Dto.UserDto;
 import com.App.Yogesh.Models.User;
 import com.App.Yogesh.Repository.UserRepository;
 import com.App.Yogesh.Response.AuthResponse;
 import com.App.Yogesh.ServiceImplmentation.CustomUserDetailService;
 import com.App.Yogesh.Services.UserService;
 import com.App.Yogesh.config.JwtProvider;
+import com.App.Yogesh.config.UserContext;
 import com.App.Yogesh.request.LoginRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -39,6 +43,20 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private UserContext userContext; // Inject UserContext
+
+
+    @PostMapping("/CheckUser")
+    public ResponseEntity<?> someEndpoint() {
+        UserDetailsDto currentUser = userContext.getCurrentUser();
+        // Use currentUser as needed
+        return ResponseEntity.ok(currentUser);
+    }
+
+
+
+
     /**
      * Creates a new user or updates an existing user.
      */
@@ -63,15 +81,25 @@ public class AuthController {
      */
     @PostMapping("/signin")
     public AuthResponse signin(@RequestBody LoginRequest loginRequest) {
+        // Authenticate the user
         Authentication authentication = authenticate(loginRequest.getEmail(), loginRequest.getPassword());
 
+        // Get the user's email and authorities
         String email = authentication.getName();
         List<GrantedAuthority> authorities = new ArrayList<>(authentication.getAuthorities());
 
+        // Fetch user details from the repository
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new BadCredentialsException("User not found.");
+        }
+
+        // Generate JWT token
         String token = JwtProvider.generateToken(email, authorities);
 
         return new AuthResponse("Login Successful", token);
     }
+
 
     private Authentication authenticate(String email, String password) {
         UserDetails userDetails = customUserDetailService.loadUserByUsername(email);

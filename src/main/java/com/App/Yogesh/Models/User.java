@@ -13,7 +13,7 @@ import java.util.List;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     private String firstName;
@@ -26,7 +26,11 @@ public class User {
 
     private String email;
 
+
     private String password;
+
+    @OneToOne(mappedBy ="user")
+    private ForgetPassword forgetPassword;
 
     private List<Integer> followers = new ArrayList<>();
     private List<Integer> followings = new ArrayList<>();
